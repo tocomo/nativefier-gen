@@ -6,7 +6,11 @@
 
 # installation
 
+```
+sudo wget -o /usr/local/bin/native-gen https://raw.githubusercontent.com/tocomo/nativefier-gen/master/nativefier-gen
+```
 
+Check content of file if you dont trust the installation process or you just want to know what is does!
 
 # usage examples
 ```

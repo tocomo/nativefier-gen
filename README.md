@@ -1,3 +1,4 @@
+The tool is supposed to make it easier to generate an application from a web site. 
 
 # features
  * creates working desktop files incl. WM_CLASS
@@ -6,12 +7,18 @@
 
 # installation
 
+Install [nativefier](https://github.com/jiahaog/nativefier#installation) first.
 ```
-sudo wget -o /usr/local/bin/native-gen https://raw.githubusercontent.com/tocomo/nativefier-gen/master/nativefier-gen
-sudo chmod 755 /usr/local/bin/native-gen
+sudo apt install npm
+sudo npm install nativefier -g
 ```
 
-Check content of file if you dont trust the installation process or you just want to know what is does!
+```
+sudo wget -O /usr/local/bin/nativefier-gen https://raw.githubusercontent.com/tocomo/nativefier-gen/master/nativefier-gen
+sudo chmod 755 /usr/local/bin/nativefier-gen
+```
+
+Check the content of the file if you don not trust the installation process or you just want to know what is does!
 
 # usage examples
 ```

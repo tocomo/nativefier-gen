@@ -1,0 +1,84 @@
+#!/bin/bash
+
+set -o pipefail
+
+if ! which npm >> /dev/null ; then
+    echo 'ERROR:missing npm - run $> sudo apt install npm'
+    exit 1
+fi
+
+if ! which nativefier >> /dev/null ; then
+    echo 'ERROR:missing nativefier - run $> sudo npm install nativefier -g'
+    exit 1
+fi
+
+
+
+function usage () {
+test -n "$1" && echo $1
+cat << EOF
+usage:
+  Run this command the first time to create the application. 
+  Do not put spaces in the NAME !!!
+
+    $> NAME=google-meet URL=https://meet.google.com $0 --tray --single-instance .. [and whatever nativefier offers]
+
+  Now we need the WM_CLASS. Run the application:
+
+    $> google-meet &
+
+  Run this command a second time with WM_CLASS environment set
+
+    $> WM_CLASS=\$(xwininfo -tree -root | egrep -o "${NAME}-nativefier-\\w*" | uniq) NAME=google-meet URL=https://meet.google.com $0 --tray --single-instance .. [and whatever nativefier offers]
+  
+EOF
+
+}
+
+test -z ${NAME} && usage "ERROR: Missing NAME env variable!" && exit 1
+test -z ${URL} && usage "ERROR: Missing URL env variable!" && exit 1
+
+mkdir -p $HOME/.local/share/nativefier
+
+cd $HOME/.local/share/nativefier
+/usr/local/bin/nativefier --name "${NAME}" "${URL}" ${@}
+
+echo "creating file $HOME/.local/bin/${NAME} ..."
+cat > "$HOME/.local/bin/${NAME}" << EOF
+#!/bin/bash
+$HOME/.local/share/nativefier/${NAME}-linux-x64/${NAME} \${@}
+EOF
+chmod 755 "$HOME/.local/bin/${NAME}"
+
+if [[ -z $WM_CLASS ]] ; then
+  echo "starting $NAME to determine WM_CLASS ..."
+  timeout 5s $HOME/.local/share/nativefier/${NAME}-linux-x64/${NAME}
+  sleep 2
+  WM_CLASS=$(xwininfo -tree -root | egrep -o "${NAME}-nativefier-\w*" | uniq)
+  wait
+fi
+
+echo "creating file $HOME/.local/bin/${NAME}-update ..."
+cat > "$HOME/.local/bin/${NAME}-update" << EOF
+#!/bin/bash
+WM_CLASS=$WM_CLASS NAME=${NAME} URL=${URL} $0 ${@} 
+EOF
+chmod 755 "$HOME/.local/bin/${NAME}-update"
+
+
+
+echo "creating file /home/$USER/.local/share/applications/${NAME}-nativefier.desktop ..."
+cat > "/home/$USER/.local/share/applications/${NAME}-nativefier.desktop" << EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=${NAME}
+Categories=GNOME;GTK;Network;WebBrowser;
+Icon=$HOME/.local/share/nativefier/${NAME}-linux-x64/resources/app/icon.png
+Exec=$HOME/.local/share/nativefier/${NAME}-linux-x64/${NAME}
+Comment=${NAME} $url
+Categories=
+Terminal=false
+StartupWMClass=${WM_CLASS}
+EOF
+

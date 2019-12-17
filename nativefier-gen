@@ -18,18 +18,9 @@ function usage () {
 test -n "$1" && echo $1
 cat << EOF
 usage:
-  Run this command the first time to create the application. 
-  Do not put spaces in the NAME !!!
+    Do not put spaces in the NAME !!!
 
     $> NAME=google-meet URL=https://meet.google.com $0 --tray --single-instance .. [and whatever nativefier offers]
-
-  Now we need the WM_CLASS. Run the application:
-
-    $> google-meet &
-
-  Run this command a second time with WM_CLASS environment set
-
-    $> WM_CLASS=\$(xwininfo -tree -root | egrep -o "${NAME}-nativefier-\\w*" | uniq) NAME=google-meet URL=https://meet.google.com $0 --tray --single-instance .. [and whatever nativefier offers]
   
 EOF
 
@@ -76,7 +67,7 @@ Name=${NAME}
 Categories=GNOME;GTK;Network;WebBrowser;
 Icon=$HOME/.local/share/nativefier/${NAME}-linux-x64/resources/app/icon.png
 Exec=$HOME/.local/share/nativefier/${NAME}-linux-x64/${NAME}
-Comment=${NAME} $url
+Comment=${NAME} ${URL}
 Categories=
 Terminal=false
 StartupWMClass=${WM_CLASS}

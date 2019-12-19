@@ -1,18 +1,16 @@
 #!/bin/bash
 
-set -o pipefail
+set -e -o pipefail
 
-if ! which npm >> /dev/null ; then
+if ! command -v npm >> /dev/null ; then
     echo 'ERROR:missing npm - run $> sudo apt install npm'
     exit 1
 fi
 
-if ! which nativefier >> /dev/null ; then
+if ! command -v nativefier >> /dev/null ; then
     echo 'ERROR:missing nativefier - run $> sudo npm install nativefier -g'
     exit 1
 fi
-
-
 
 function usage () {
 test -n "$1" && echo $1
@@ -26,40 +24,55 @@ EOF
 
 }
 
+function wmclass(){
+  xwininfo -tree -root | egrep -o "${NAME}-nativefier-\w*" | uniq
+}
+
 test -z ${NAME} && usage "ERROR: Missing NAME env variable!" && exit 1
 test -z ${URL} && usage "ERROR: Missing URL env variable!" && exit 1
 
-mkdir -p $HOME/.local/share/nativefier
+mkdir -p "$HOME/.local/share/nativefier"
 
-cd $HOME/.local/share/nativefier
-/usr/local/bin/nativefier --name "${NAME}" "${URL}" ${@}
+cd "$HOME/.local/share/nativefier"
+/usr/local/bin/nativefier --name "${NAME}" "${URL}" "${@}"
 
-echo "creating file $HOME/.local/bin/${NAME} ..."
-cat > "$HOME/.local/bin/${NAME}" << EOF
+bin_path="$HOME/.local/share/nativefier/${NAME}-linux-x64/${NAME}"
+
+start_file="$HOME/.local/bin/${NAME}"
+
+echo "creating file $start_file ..."
+cat > "$start_file" << EOF
 #!/bin/bash
-$HOME/.local/share/nativefier/${NAME}-linux-x64/${NAME} \${@}
+${bin_path} \${@}
 EOF
-chmod 755 "$HOME/.local/bin/${NAME}"
+chmod 755 "$start_file"
+
+WM_CLASS=$(wmclass || true)
 
 if [[ -z $WM_CLASS ]] ; then
   echo "starting $NAME to determine WM_CLASS ..."
-  timeout 5s $HOME/.local/share/nativefier/${NAME}-linux-x64/${NAME}
-  sleep 2
-  WM_CLASS=$(xwininfo -tree -root | egrep -o "${NAME}-nativefier-\w*" | uniq)
+  timeout 10 "${HOME}/.local/share/nativefier/${NAME}-linux-x64/${NAME}" || true
+  sleep 4
+  WM_CLASS=$(wmclass || true)
   wait
 fi
+if [[ -z $WM_CLASS ]] ; then
+  echo "could not filter WM_CLASS" >&2
+fi
 
-echo "creating file $HOME/.local/bin/${NAME}-update ..."
-cat > "$HOME/.local/bin/${NAME}-update" << EOF
+update_file="$HOME/.local/bin/${NAME}-update"
+
+echo "creating file  $update_file ..."
+cat > "$update_file" << EOF
 #!/bin/bash
-WM_CLASS=$WM_CLASS NAME=${NAME} URL=${URL} $0 ${@} 
+WM_CLASS=$WM_CLASS NAME=${NAME} URL=${URL} $0 ${@}
 EOF
-chmod 755 "$HOME/.local/bin/${NAME}-update"
+chmod 755 "$update_file"
 
+desktop_file="/home/$USER/.local/share/applications/${NAME}-nativefier.desktop"
 
-
-echo "creating file /home/$USER/.local/share/applications/${NAME}-nativefier.desktop ..."
-cat > "/home/$USER/.local/share/applications/${NAME}-nativefier.desktop" << EOF
+echo "creating file $desktop_file ..."
+cat > "$desktop_file" << EOF
 [Desktop Entry]
 Version=1.0
 Type=Application
@@ -68,8 +81,9 @@ Categories=GNOME;GTK;Network;WebBrowser;
 Icon=$HOME/.local/share/nativefier/${NAME}-linux-x64/resources/app/icon.png
 Exec=$HOME/.local/share/nativefier/${NAME}-linux-x64/${NAME}
 Comment=${NAME} ${URL}
-Categories=
 Terminal=false
 StartupWMClass=${WM_CLASS}
+StartupNotify=true
 EOF
 
+desktop-file-validate "$desktop_file"

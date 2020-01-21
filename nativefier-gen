@@ -18,7 +18,7 @@ cat << EOF
 usage:
     Do not put spaces in the NAME !!!
 
-    $> NAME=google-meet URL=https://meet.google.com $0 --tray --single-instance .. [and whatever nativefier offers]
+    $> NAME=google-meet URL='https://meet.google.com' $0 --tray --single-instance .. [and whatever nativefier offers]
   
 EOF
 
@@ -63,10 +63,9 @@ fi
 update_file="$HOME/.local/bin/${NAME}-update"
 
 echo "creating file  $update_file ..."
-cat > "$update_file" << EOF
-#!/bin/bash
-WM_CLASS=$WM_CLASS NAME=${NAME} URL=${URL} $0 ${@}
-EOF
+echo "#!/bin/bash
+WM_CLASS=$WM_CLASS NAME=${NAME} URL='${URL}' $0 ${@}
+" | sed -e "s| \(http[^ ]*\)| '\1'|g" - > "$update_file"
 chmod 755 "$update_file"
 
 desktop_file="/home/$USER/.local/share/applications/${NAME}-nativefier.desktop"

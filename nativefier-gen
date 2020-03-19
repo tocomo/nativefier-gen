@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NOPTS='--electron-version 8.0.0'
+
 set -e -o pipefail
 
 if ! command -v npm >> /dev/null ; then
@@ -34,7 +36,8 @@ test -z ${URL} && usage "ERROR: Missing URL env variable!" && exit 1
 mkdir -p "$HOME/.local/share/nativefier"
 
 cd "$HOME/.local/share/nativefier"
-/usr/local/bin/nativefier --name "${NAME}" "${URL}" "${@}"
+
+/usr/local/bin/nativefier $NOPTS --name "${NAME}" "${URL}" "${@}"
 
 bin_path="$HOME/.local/share/nativefier/${NAME}-linux-x64/${NAME}"
 
